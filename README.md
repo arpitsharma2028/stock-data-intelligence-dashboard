@@ -3,6 +3,7 @@
 A full-stack financial dashboard that fetches, processes, and visualizes stock market data (NSE) in real-time using **FastAPI, SQLite, and JavaScript**.
 
 🔗 **Live Project (Local):** http://127.0.0.1:8000/static/index.html
+
 📂 **Repository:** https://github.com/arpitsharma2028/stock-data-intelligence-dashboard
 
 ---
