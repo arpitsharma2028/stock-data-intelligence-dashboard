@@ -90,16 +90,20 @@ def init_db():
 # ─────────────────────────────────────────────
 # Data ingestion & transformation
 # ─────────────────────────────────────────────
+
 def fetch_and_store(symbol: str, period: str = "1y"):
+    """Download stock data from yfinance, compute metrics, store in SQLite."""
+
     try:
-        df = yf.download(symbol + ".NS", period=period, progress=False)
-    except Exception as e:
-        print("Error:", e)
+        df = yf.download(nse(symbol), period=period, progress=False)
+    except:
         df = pd.DataFrame()
 
-    # ✅ fallback only if needed
+    # 🔥 Fallback if API fails
     if df.empty:
-        raise ValueError(f"No data found for {symbol}")
+        print(f"[WARNING] Using fallback for {symbol}")
+
+        import numpy as np
 
         base_price = np.random.uniform(200, 800)
         prices = [base_price]
@@ -129,12 +133,16 @@ def fetch_and_store(symbol: str, period: str = "1y"):
         "Volume": "volume"
     }, inplace=True)
 
+    # Clean
     df["date"] = pd.to_datetime(df["date"]).dt.date.astype(str)
     df = df[["date", "open", "high", "low", "close", "volume"]].copy()
     df.dropna(subset=["close"], inplace=True)
 
+    # Calculated metrics
     df["daily_return"] = ((df["close"] - df["open"]) / df["open"] * 100).round(4)
     df["ma7"] = df["close"].rolling(window=7, min_periods=1).mean().round(2)
+
+    # 🔥 Prediction
     df["predicted"] = df["close"].rolling(window=5, min_periods=1).mean().shift(-1).round(2)
 
     conn = get_db()
@@ -159,82 +167,6 @@ def fetch_and_store(symbol: str, period: str = "1y"):
     conn.close()
 
     return len(df)
-# def fetch_and_store(symbol: str, period: str = "1y"):
-#     """Download stock data from yfinance, compute metrics, store in SQLite."""
-
-#     try:
-#         df = yf.download(nse(symbol), period=period, progress=False)
-#     except:
-#         df = pd.DataFrame()
-
-#     # 🔥 Fallback if API fails
-#     if df.empty:
-#         print(f"[WARNING] Using fallback for {symbol}")
-
-#         import numpy as np
-
-#         base_price = np.random.uniform(200, 800)
-#         prices = [base_price]
-
-#         for _ in range(59):
-#             prices.append(prices[-1] * (1 + np.random.normal(0, 1)/100))
-
-#         dates = pd.date_range(end=pd.Timestamp.today(), periods=60)
-
-#         df = pd.DataFrame({
-#             "Date": dates,
-#             "Open": prices,
-#             "High": [p * 1.02 for p in prices],
-#             "Low": [p * 0.98 for p in prices],
-#             "Close": prices,
-#             "Volume": np.random.randint(100000, 5000000, 60),
-#         })
-
-#     df = df.reset_index()
-
-#     df.rename(columns={
-#         "Date": "date",
-#         "Open": "open",
-#         "High": "high",
-#         "Low": "low",
-#         "Close": "close",
-#         "Volume": "volume"
-#     }, inplace=True)
-
-#     # Clean
-#     df["date"] = pd.to_datetime(df["date"]).dt.date.astype(str)
-#     df = df[["date", "open", "high", "low", "close", "volume"]].copy()
-#     df.dropna(subset=["close"], inplace=True)
-
-#     # Calculated metrics
-#     df["daily_return"] = ((df["close"] - df["open"]) / df["open"] * 100).round(4)
-#     df["ma7"] = df["close"].rolling(window=7, min_periods=1).mean().round(2)
-
-#     # 🔥 Prediction
-#     df["predicted"] = df["close"].rolling(window=5, min_periods=1).mean().shift(-1).round(2)
-
-#     conn = get_db()
-#     for _, row in df.iterrows():
-#         conn.execute("""
-#             INSERT OR REPLACE INTO stock_data
-#             (symbol, date, open, high, low, close, volume, daily_return, ma7)
-#             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-#         """, (
-#             symbol,
-#             row["date"],
-#             row["open"],
-#             row["high"],
-#             row["low"],
-#             row["close"],
-#             row["volume"],
-#             row["daily_return"],
-#             row["ma7"]
-#         ))
-
-#     conn.commit()
-#     conn.close()
-
-#     return len(df)
 
 def load_from_db(symbol: str, days: int = 30):
     conn = get_db()

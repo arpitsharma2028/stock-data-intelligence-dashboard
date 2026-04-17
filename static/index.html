@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stock Data Intelligence Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside id="sidebar">
+  <header>
+    <h1>📈 JarNox Stocks</h1>
+    <p>India Market Intelligence</p>
+  </header>
+  <div id="company-list">Loading…</div>
+</aside>
+
+<!-- Loader -->
+<div id="loader"><div class="spinner"></div><p id="loader-msg">Fetching data…</p></div>
+
+<!-- Main -->
+<main id="main">
+  <div id="topbar">
+    <h2 id="stock-title">Select a company →</h2>
+    <select id="period-select">
+      <option value="30">Last 30 days</option>
+      <option value="60">Last 60 days</option>
+      <option value="90">Last 90 days</option>
+      <option value="180">Last 6 months</option>
+      <option value="365">Last 1 year</option>
+    </select>
+    <button id="refresh-btn" style="display:none" onclick="refreshCurrent()">⟳ Refresh</button>
+    <button onclick="loadGainersLosers()" style="background:#6366f1;border-color:#6366f1;">📊 Gainers/Losers</button>
+  </div>
+
+  <div id="content">
+    <div id="empty">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>
+      </svg>
+      <p>Select a company from the sidebar</p>
+      <span>Data is fetched live from yfinance (NSE)</span>
+    </div>
+  </div>
+</main>
+
+<script src="/static/script.js"></script>
+</body>
+</html>
