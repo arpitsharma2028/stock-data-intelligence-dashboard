@@ -283,6 +283,63 @@ def get_summary(symbol: str):
     }
 
 
+@app.get("/forecast/{symbol}", tags=["Data"])
+def get_forecast(symbol: str, days: int = Query(14, ge=7, le=30)):
+    """
+    Generate a Monte Carlo simulation forecast (Geometric Brownian Motion)
+    Returns upper bound, median, and lower bound for the shaded probability cone.
+    """
+    symbol = symbol.upper()
+    ensure_data(symbol)
+    
+    rows = load_from_db(symbol, days=60) # Use 60 days to calc historical volatility
+    if len(rows) < 10:
+        raise HTTPException(status_code=400, detail="Not enough historical data for forecast.")
+        
+    df = pd.DataFrame(rows)
+    closes = df["close"].values
+    
+    returns = np.diff(closes) / closes[:-1]
+    mu = np.mean(returns)
+    sigma = np.std(returns)
+    
+    last_price = closes[-1]
+    last_date = pd.to_datetime(df["date"].iloc[-1])
+    
+    num_simulations = 100
+    simulations = []
+    
+    for _ in range(num_simulations):
+        prices = [last_price]
+        for _ in range(days):
+            epsilon = np.random.normal(0, 1)
+            # Geometric Brownian Motion
+            price = prices[-1] * np.exp((mu - (sigma**2)/2) + sigma * epsilon)
+            prices.append(price)
+        simulations.append(prices)
+        
+    simulations = np.array(simulations)
+    
+    upper_bound = np.percentile(simulations, 95, axis=0)
+    median_path = np.percentile(simulations, 50, axis=0)
+    lower_bound = np.percentile(simulations, 5, axis=0)
+    
+    future_dates = [last_date.strftime("%Y-%m-%d")]
+    current_date = last_date + timedelta(days=1)
+    while len(future_dates) < days + 1:
+        if current_date.weekday() < 5:
+            future_dates.append(current_date.strftime("%Y-%m-%d"))
+        current_date += timedelta(days=1)
+        
+    return {
+        "symbol": symbol,
+        "dates": future_dates,
+        "upper": [round(float(p), 2) for p in upper_bound],
+        "median": [round(float(p), 2) for p in median_path],
+        "lower": [round(float(p), 2) for p in lower_bound]
+    }
+
+
 @app.get("/compare", tags=["Data"])
 def compare_stocks(
     symbol1: str = Query(..., description="First stock symbol"),

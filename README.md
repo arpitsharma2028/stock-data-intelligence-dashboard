@@ -1,25 +1,20 @@
 # 📊 Stock Data Intelligence Dashboard
 
-A full-stack financial dashboard that fetches, processes, and visualizes stock market data (NSE) in real-time using **FastAPI, SQLite, and JavaScript**.
+A full-stack, responsive financial dashboard that fetches, processes, and visualizes stock market data (NSE) in real-time. Built with **FastAPI, SQLite, and Vanilla JavaScript**, this platform goes beyond basic charting by implementing advanced mathematical modeling for price prediction.
 
-🔗 **Live Project (Local):** http://127.0.0.1:8000/static/index.html
-
+🔗 **Live Project (Local):** `http://127.0.0.1:8000/static/index.html`  
 📂 **Repository:** https://github.com/arpitsharma2028/stock-data-intelligence-dashboard
 
 ---
 
 ## 🚀 Features
 
-* 📈 Real-time stock data using **Yahoo Finance (yfinance)**
-* 📊 Interactive charts with **Chart.js**
-* 🧠 Technical indicators:
-
-  * Daily Return %
-  * Moving Average (MA7)
-* 💾 Local storage using **SQLite**
-* 🔁 Smart fallback system when API fails
-* ⚡ Fast backend powered by **FastAPI**
-* 🎯 Clean, responsive dashboard UI
+* 📈 **Real-Time Data Ingestion:** Live market data fetched seamlessly via **Yahoo Finance (yfinance)**.
+* 🧠 **AI/ML Price Forecasting (Monte Carlo):** Uses Geometric Brownian Motion to run 100 random future walks based on historical volatility, generating a 95% confidence probability cone.
+* 📊 **Interactive Chart.js Visualizations:** Beautiful, animated charts displaying closing prices, 7-day Moving Averages, and daily return percentages.
+* 🔄 **Comparative Analysis:** Side-by-side performance normalization (Base 100) to easily compare two different stocks.
+* 📱 **Mobile-First Responsive UI:** Custom dark-themed interface with an off-canvas mobile menu, dynamic error handling, and skeleton loaders.
+* 💾 **Persistent DB Caching:** Robust SQLite caching layer to dramatically speed up load times and prevent API rate-limiting.
 
 ---
 
@@ -69,15 +64,11 @@ git clone https://github.com/arpitsharma2028/stock-data-intelligence-dashboard.g
 cd stock-data-intelligence-dashboard
 ```
 
----
-
 ### 2️⃣ Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
-
----
 
 ### 3️⃣ Run the backend server
 
@@ -85,10 +76,9 @@ pip install -r requirements.txt
 python -m uvicorn main:app --reload
 ```
 
----
-
 ### 4️⃣ Open in browser
 
+Navigate to the following URL to view the dashboard:
 ```
 http://127.0.0.1:8000/static/index.html
 ```
@@ -97,59 +87,41 @@ http://127.0.0.1:8000/static/index.html
 
 ## 📡 API Endpoints
 
-| Endpoint            | Description               |
-| ------------------- | ------------------------- |
-| `/data/{symbol}`    | Get historical stock data |
-| `/summary/{symbol}` | Get stock summary         |
-| `/companies`        | List available companies  |
+| Endpoint            | Method | Description |
+| ------------------- | ------ | ----------- |
+| `/companies`        | GET    | List all supported companies and sectors |
+| `/data/{symbol}`    | GET    | Fetch historical stock data (configurable range) |
+| `/summary/{symbol}` | GET    | Get 52-week highs/lows, volatility score, and top gainers/losers |
+| `/forecast/{symbol}`| GET    | Generate a 14-day Monte Carlo probability forecast |
+| `/compare`          | GET    | Normalize and compare two stocks' performance |
+
+*Interactive Swagger documentation is auto-generated and available at `http://127.0.0.1:8000/docs`.*
 
 ---
 
-## 📊 Supported Stocks
+## 📊 Supported Stocks (Examples)
 
-* RELIANCE
-* TCS
-* INFY
-* HDFCBANK
-* ICICIBANK
-* WIPRO
-
----
-
-## ⚠️ Important Notes
-
-* This project uses **Yahoo Finance API (yfinance)** which may:
-
-  * Fail on restricted networks (e.g., college WiFi)
-  * Be rate-limited
-* A **fallback system + retry logic** ensures app stability
+* RELIANCE (Energy)
+* TCS (IT)
+* INFY (IT)
+* HDFCBANK (Banking)
+* ICICIBANK (Banking)
+* WIPRO (IT)
+* *(Easily expandable in the backend configuration)*
 
 ---
 
-## 🧠 Key Learnings
+## 🧠 Key Learnings & Architecture
 
-* Building REST APIs with FastAPI
-* Handling unreliable external APIs
-* Data processing using Pandas
-* Frontend-backend integration
-* Debugging real-world issues (API, network, static files)
+* **Resilient Architecture:** Implemented smart fallback systems and retry logic to gracefully handle unreliable external APIs or network restrictions.
+* **Mathematical Modeling:** Translated complex quantitative finance formulas (Geometric Brownian Motion) into actionable backend Python logic.
+* **Full-Stack Integration:** Built a seamless pipeline from raw data ingestion, to mathematical processing, to REST API delivery, to interactive frontend rendering.
 
----
 
-## 🚀 Future Improvements
-
-* 🔐 User authentication (login/signup)
-* ☁️ Deployment (Render / Railway / AWS)
-* 📊 More indicators (RSI, MACD)
-* 📁 Portfolio tracking
-* 🎨 UI improvements (animations, themes)
-
----
 
 ## 👨‍💻 Author
 
-**Arpit Sharma**
-B.Tech CSE Student
+**Arpit Sharma**  
 
 ---
 
@@ -157,11 +129,8 @@ B.Tech CSE Student
 
 If you found this project useful:
 
-👉 Give it a ⭐ on GitHub
-👉 Share it with others
+👉 Give it a ⭐ on GitHub  
+👉 Share it with others  
 
 ---
 
-## 💬 Feedback
-
-Feel free to open issues or contribute!

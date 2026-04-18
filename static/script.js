@@ -65,19 +65,20 @@ async function loadStockView() {
   showLoader(`Loading ${currentSymbol} data…`);
 
   try {
-    const [stockData, summary] = await Promise.all([
+    const [stockData, summary, forecast] = await Promise.all([
       apiFetch(`/data/${currentSymbol}?days=${days}`),
-      apiFetch(`/summary/${currentSymbol}`)
+      apiFetch(`/summary/${currentSymbol}`),
+      apiFetch(`/forecast/${currentSymbol}?days=14`).catch(() => null)
     ]);
 
-    renderContent(stockData, summary);
+    renderContent(stockData, summary, forecast);
   } catch (e) {
     showError(e.message);
   } finally { hideLoader(); }
 }
 
 // ── Render
-function renderContent(stockData, summary) {
+function renderContent(stockData, summary, forecast) {
   const content = document.getElementById('content');
   content.innerHTML = `
     <div id="stats-row"></div>
@@ -144,17 +145,36 @@ function renderContent(stockData, summary) {
   const ma7 = stockData.data.map(d => d.ma7);
   const returns = stockData.data.map(d => d.daily_return);
 
+  let datasets = [
+    { label: 'Close', data: closes, borderColor: '#4f8ef7', backgroundColor: 'rgba(79,142,247,.08)', fill: true, pointRadius: 0, tension: .3 },
+    { label: '7-day MA', data: ma7, borderColor: '#f59e0b', borderDash: [4, 3], pointRadius: 0, tension: .3 },
+  ];
+
+  if (forecast && forecast.dates) {
+    const futureDates = forecast.dates.slice(1);
+    labels.push(...futureDates);
+    
+    const padArray = Array(closes.length - 1).fill(null);
+    const upperData = padArray.concat(forecast.upper);
+    const medianData = padArray.concat(forecast.median);
+    const lowerData = padArray.concat(forecast.lower);
+    
+    datasets.push(
+      { label: 'Forecast (Median)', data: medianData, borderColor: '#a78bfa', borderDash: [2, 2], pointRadius: 0, tension: .3, borderWidth: 2 },
+      { label: 'Upper Bound', data: upperData, borderColor: 'transparent', backgroundColor: 'rgba(167, 139, 250, 0.15)', fill: '+1', pointRadius: 0, tension: .3 },
+      { label: 'Lower Bound', data: lowerData, borderColor: 'transparent', fill: false, pointRadius: 0, tension: .3 }
+    );
+  }
+
   priceChart?.destroy();
   priceChart = new Chart(document.getElementById('priceCanvas'), {
     type: 'line',
-    data: {
-      labels,
-      datasets: [
-        { label: 'Close', data: closes, borderColor: '#4f8ef7', backgroundColor: 'rgba(79,142,247,.08)', fill: true, pointRadius: 0, tension: .3 },
-        { label: '7-day MA', data: ma7, borderColor: '#f59e0b', borderDash: [4, 3], pointRadius: 0, tension: .3 },
-      ]
-    },
-    options: { ...chartOpts('₹'), animation: { duration: 600, easing: 'easeInOutQuart' } }
+    data: { labels, datasets },
+    options: { 
+      ...chartOpts('₹'), 
+      animation: { duration: 600, easing: 'easeInOutQuart' },
+      interaction: { mode: 'index', intersect: false }
+    }
   });
 
   // Return chart
