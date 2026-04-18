@@ -1,136 +1,184 @@
 # 📊 Stock Data Intelligence Dashboard
 
-A full-stack, responsive financial dashboard that fetches, processes, and visualizes stock market data (NSE) in real-time. Built with **FastAPI, SQLite, and Vanilla JavaScript**, this platform goes beyond basic charting by implementing advanced mathematical modeling for price prediction.
+A full-stack, responsive financial data platform that fetches, processes, and visualizes **NSE stock market data in real time**. Built with **FastAPI, SQLite, and Vanilla JavaScript**, the platform goes beyond basic charting with **Monte Carlo-based price forecasting** and multi-stock comparative analysis.
 
-🔗 **Live Project (Local):** `http://127.0.0.1:8000/static/index.html`  
+🔗 **Live (local):** `http://127.0.0.1:8000`  
 📂 **Repository:** https://github.com/arpitsharma2028/stock-data-intelligence-dashboard
 
 ---
 
 ## 🚀 Features
 
-* 📈 **Real-Time Data Ingestion:** Live market data fetched seamlessly via **Yahoo Finance (yfinance)**.
-* 🧠 **AI/ML Price Forecasting (Monte Carlo):** Uses Geometric Brownian Motion to run 100 random future walks based on historical volatility, generating a 95% confidence probability cone.
-* 📊 **Interactive Chart.js Visualizations:** Beautiful, animated charts displaying closing prices, 7-day Moving Averages, and daily return percentages.
-* 🔄 **Comparative Analysis:** Side-by-side performance normalization (Base 100) to easily compare two different stocks.
-* 📱 **Mobile-First Responsive UI:** Custom dark-themed interface with an off-canvas mobile menu, dynamic error handling, and skeleton loaders.
-* 💾 **Persistent DB Caching:** Robust SQLite caching layer to dramatically speed up load times and prevent API rate-limiting.
+| Feature | Description |
+|---|---|
+| 📈 **Real-Time Data** | Live NSE market data fetched via **Yahoo Finance (yfinance)** with a graceful mock-data fallback |
+| 🧠 **Monte Carlo Forecasting** | Geometric Brownian Motion over 100 simulations → 14-day probability cone (5th / 50th / 95th percentile) |
+| 📊 **Interactive Charts** | Chart.js — animated closing price + 7-day MA line chart, coloured daily-return bar chart |
+| 🔄 **Stock Comparison** | Base-100 normalised performance chart + Pearson correlation between any two stocks |
+| 📱 **Responsive UI** | Dark-themed, mobile-first design with off-canvas sidebar and skeleton loaders |
+| 💾 **DB Caching** | SQLite caching layer (auto-created on first run) to speed up repeated requests and avoid rate-limiting |
+| 🏆 **Gainers / Losers** | Live snapshot of today's top 3 gainers and losers across all tracked companies |
+| 🐳 **Docker Ready** | Included `Dockerfile` for one-command containerised deployment |
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Backend
-
-* Python
-* FastAPI
-* SQLite
-* Pandas
-* yfinance
-
-### Frontend
-
-* HTML
-* CSS
-* JavaScript
-* Chart.js
+**Backend:** Python · FastAPI · SQLite · Pandas · NumPy · yfinance  
+**Frontend:** HTML · Vanilla CSS · Vanilla JavaScript · Chart.js  
+**DevOps:** Docker · Uvicorn
 
 ---
 
 ## 📁 Project Structure
 
-```
+```text
 stock-data-intelligence-dashboard/
 │
-├── main.py              # FastAPI backend
-├── stocks.db            # SQLite database
-├── requirements.txt
 ├── README.md
-│
-├── static/              # Frontend files
-│   ├── index.html
-│   ├── style.css
-│   └── script.js
+└── stock_dashboard/           # Main application folder
+    ├── app/                   # FastAPI backend package
+    │   ├── __init__.py
+    │   ├── main.py            # App entry point, middleware & startup
+    │   ├── database.py        # SQLite connection & schema init
+    │   ├── services.py        # yfinance fetch, metric computation, caching
+    │   └── routers.py         # All API route handlers
+    ├── static/                # Frontend (index.html, style.css, script.js)
+    ├── Dockerfile             # Docker container definition
+    ├── requirements.txt       # Pinned Python dependencies
+    └── .gitignore             # stocks.db excluded — DB is auto-created on first run
 ```
+
+> **Note:** `stocks.db` is intentionally excluded from version control. It is automatically created and populated the first time you start the server.
 
 ---
 
 ## ⚙️ Installation & Setup
 
-### 1️⃣ Clone the repository
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/arpitsharma2028/stock-data-intelligence-dashboard.git
 cd stock-data-intelligence-dashboard
 ```
 
-### 2️⃣ Install dependencies
+### 2. Install dependencies
 
 ```bash
+cd stock_dashboard
 pip install -r requirements.txt
 ```
 
-### 3️⃣ Run the backend server
+### 3. Run the server
 
 ```bash
-python -m uvicorn main:app --reload
+# Run from inside the stock_dashboard/ directory
+python -m uvicorn app.main:app --reload
 ```
 
-### 4️⃣ Open in browser
+### 4. Open the dashboard
 
-Navigate to the following URL to view the dashboard:
 ```
-http://127.0.0.1:8000/static/index.html
+http://127.0.0.1:8000
+```
+
+Swagger API docs are auto-generated at `http://127.0.0.1:8000/docs`.
+
+---
+
+### 🐳 Docker (Alternative)
+
+```bash
+cd stock_dashboard
+docker build -t stock-dashboard .
+docker run -p 8000:8000 stock-dashboard
 ```
 
 ---
 
 ## 📡 API Endpoints
 
-| Endpoint            | Method | Description |
-| ------------------- | ------ | ----------- |
-| `/companies`        | GET    | List all supported companies and sectors |
-| `/data/{symbol}`    | GET    | Fetch historical stock data (configurable range) |
-| `/summary/{symbol}` | GET    | Get 52-week highs/lows, volatility score, and top gainers/losers |
-| `/forecast/{symbol}`| GET    | Generate a 14-day Monte Carlo probability forecast |
-| `/compare`          | GET    | Normalize and compare two stocks' performance |
+| Endpoint | Method | Description |
+|---|---|---|
+| `/companies` | GET | List all supported companies with name and sector |
+| `/data/{symbol}` | GET | Historical OHLCV + daily return + 7-day MA (configurable window via `?days=`) |
+| `/summary/{symbol}` | GET | 52-week high/low, average close, annualised volatility score, top 3 best/worst days |
+| `/forecast/{symbol}` | GET | 14-day Monte Carlo probability cone (upper / median / lower bounds) |
+| `/compare` | GET | Normalised (Base-100) performance comparison + Pearson correlation for two stocks |
+| `/gainers-losers` | GET | Today's top 3 gainers and losers across all tracked stocks |
+| `/refresh/{symbol}` | POST | Force re-fetch latest data from yfinance for a specific symbol |
 
-*Interactive Swagger documentation is auto-generated and available at `http://127.0.0.1:8000/docs`.*
-
----
-
-## 📊 Supported Stocks (Examples)
-
-* RELIANCE (Energy)
-* TCS (IT)
-* INFY (IT)
-* HDFCBANK (Banking)
-* ICICIBANK (Banking)
-* WIPRO (IT)
-* *(Easily expandable in the backend configuration)*
+> All endpoints are fully documented with descriptions and parameter validation in the interactive Swagger UI at `/docs`.
 
 ---
 
-## 🧠 Key Learnings & Architecture
+## 📊 Supported Stocks
 
-* **Resilient Architecture:** Implemented smart fallback systems and retry logic to gracefully handle unreliable external APIs or network restrictions.
-* **Mathematical Modeling:** Translated complex quantitative finance formulas (Geometric Brownian Motion) into actionable backend Python logic.
-* **Full-Stack Integration:** Built a seamless pipeline from raw data ingestion, to mathematical processing, to REST API delivery, to interactive frontend rendering.
+| Symbol | Company | Sector |
+|---|---|---|
+| RELIANCE | Reliance Industries | Energy |
+| TCS | Tata Consultancy Services | IT |
+| INFY | Infosys | IT |
+| HDFCBANK | HDFC Bank | Banking |
+| ICICIBANK | ICICI Bank | Banking |
+| WIPRO | Wipro | IT |
+| SBIN | State Bank of India | Banking |
+| TATAMOTORS | Tata Motors | Automobile |
+| BAJFINANCE | Bajaj Finance | Finance |
+| ADANIENT | Adani Enterprises | Conglomerate |
 
+---
 
+## 🧮 Calculated Metrics
+
+| Metric | Formula / Method |
+|---|---|
+| **Daily Return** | `(Close − Open) / Open × 100` |
+| **7-day Moving Average** | Rolling mean of closing price over 7 days |
+| **52-week High / Low** | Max / Min of the last 365 days of data |
+| **Volatility Score** | Annualised standard deviation of daily returns: `std(returns) × √252` |
+| **Correlation** | Pearson correlation of daily returns between two selected stocks |
+| **Monte Carlo Forecast** | Geometric Brownian Motion: `S(t+1) = S(t) × exp((μ − σ²/2) + σε)`, 100 paths |
+
+---
+
+## ⚠️ Troubleshooting
+
+**Port 8000 already in use**
+```
+[WinError 10013] An attempt was made to access a socket in a way forbidden...
+```
+Stop any other running Uvicorn process, or use a different port:
+```bash
+python -m uvicorn app.main:app --reload --port 8001
+```
+
+**`Could not import module "main"`**  
+Make sure you are running the command from inside the `stock_dashboard/` directory, and use the full module path:
+```bash
+python -m uvicorn app.main:app --reload
+```
+
+**No data / charts empty**  
+Data is fetched on first request for each symbol. If yfinance is unreachable (corporate network, VPN), the app automatically falls back to realistic mock data so the UI remains fully functional.
+
+---
+
+## 🏗️ Architecture Notes
+
+- **Resilient data layer:** `ensure_data()` checks the local SQLite cache before hitting the network. If the external API fails, a statistically realistic mock dataset is generated so the dashboard never shows a blank screen.
+- **Separation of concerns:** Routing (`routers.py`) → Business logic & data (`services.py`) → Persistence (`database.py`).
+- **CORS:** Configured to `allow_origins=["*"]` for local development convenience. Restrict this for any public deployment.
+
+---
 
 ## 👨‍💻 Author
 
 **Arpit Sharma**  
+📧 Contact via GitHub — [arpitsharma2028](https://github.com/arpitsharma2028)
 
 ---
 
-## ⭐ Show your support
+## ⭐ Show Your Support
 
-If you found this project useful:
-
-👉 Give it a ⭐ on GitHub  
-👉 Share it with others  
-
----
-
+If you found this project useful, give it a ⭐ on GitHub and share it with others!
