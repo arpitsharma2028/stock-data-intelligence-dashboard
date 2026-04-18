@@ -11,10 +11,7 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 import sqlite3
-import os
 from datetime import datetime, timedelta
-from typing import Optional
-import json
 
 # ─────────────────────────────────────────────
 # App setup
@@ -35,6 +32,8 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 DB_PATH = "stocks.db"
+
+MOCK_SYMBOLS = set()
 
 # ─────────────────────────────────────────────
 # Indian stocks (NSE)
@@ -95,15 +94,15 @@ def fetch_and_store(symbol: str, period: str = "1y"):
     """Download stock data from yfinance, compute metrics, store in SQLite."""
 
     try:
-        df = yf.download(nse(symbol), period=period, progress=False)
-    except:
+        df = yf.download(nse(symbol), period=period, progress=False, multi_level_index=False)
+    except Exception as e:
+        print(f"[ERROR] yfinance download failed for {symbol}: {e}")
         df = pd.DataFrame()
 
     # 🔥 Fallback if API fails
     if df.empty:
         print(f"[WARNING] Using fallback for {symbol}")
-
-        import numpy as np
+        MOCK_SYMBOLS.add(symbol)
 
         base_price = np.random.uniform(200, 800)
         prices = [base_price]
@@ -142,26 +141,15 @@ def fetch_and_store(symbol: str, period: str = "1y"):
     df["daily_return"] = ((df["close"] - df["open"]) / df["open"] * 100).round(4)
     df["ma7"] = df["close"].rolling(window=7, min_periods=1).mean().round(2)
 
-    # 🔥 Prediction
-    df["predicted"] = df["close"].rolling(window=5, min_periods=1).mean().shift(-1).round(2)
-
     conn = get_db()
-    for _, row in df.iterrows():
-        conn.execute("""
-            INSERT OR REPLACE INTO stock_data
-            (symbol, date, open, high, low, close, volume, daily_return, ma7)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            symbol,
-            row["date"],
-            row["open"],
-            row["high"],
-            row["low"],
-            row["close"],
-            row["volume"],
-            row["daily_return"],
-            row["ma7"]
-        ))
+    # Add symbol to the dataframe for easy insertion
+    df["symbol"] = symbol
+
+    conn.executemany("""
+        INSERT OR REPLACE INTO stock_data
+        (symbol, date, open, high, low, close, volume, daily_return, ma7)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, df[["symbol", "date", "open", "high", "low", "close", "volume", "daily_return", "ma7"]].values.tolist())
 
     conn.commit()
     conn.close()
@@ -249,7 +237,9 @@ def get_stock_data(symbol: str, days: int = Query(30, ge=1, le=365)):
     rows = load_from_db(symbol, days=days)
     if not rows:
         raise HTTPException(status_code=404, detail="No data found for given range.")
-    return {"symbol": symbol, "days": days, "count": len(rows), "data": rows}
+    
+    data_source = "mock" if symbol in MOCK_SYMBOLS else "yfinance"
+    return {"symbol": symbol, "days": days, "count": len(rows), "data_source": data_source, "data": rows}
 
 
 @app.get("/summary/{symbol}", tags=["Data"])
@@ -260,15 +250,13 @@ def get_summary(symbol: str):
     """
     symbol = symbol.upper()
     ensure_data(symbol)
-    rows = all_data_for(symbol)
+    rows = load_from_db(symbol, days=365)
 
     if not rows:
         raise HTTPException(status_code=404, detail="No data available.")
 
-    df = pd.DataFrame(rows)
-    df["date"] = pd.to_datetime(df["date"])
-    one_year_ago = datetime.now() - timedelta(days=365)
-    df_52w = df[df["date"] >= one_year_ago]
+    df_52w = pd.DataFrame(rows)
+    df_52w["date"] = pd.to_datetime(df_52w["date"])
 
     # Volatility score: std of daily returns (annualised)
     volatility = round(float(df_52w["daily_return"].std() * np.sqrt(252)), 2) if len(df_52w) > 1 else 0
@@ -279,10 +267,13 @@ def get_summary(symbol: str):
     top3_best["date"]  = top3_best["date"].astype(str)
     top3_worst["date"] = top3_worst["date"].astype(str)
 
+    data_source = "mock" if symbol in MOCK_SYMBOLS else "yfinance"
+
     return {
         "symbol": symbol,
         "name": COMPANIES[symbol]["name"],
         "sector": COMPANIES[symbol]["sector"],
+        "data_source": data_source,
         "52_week_high": round(float(df_52w["high"].max()), 2) if not df_52w.empty else None,
         "52_week_low":  round(float(df_52w["low"].min()), 2)  if not df_52w.empty else None,
         "avg_close":    round(float(df_52w["close"].mean()), 2) if not df_52w.empty else None,

@@ -2,7 +2,7 @@ const API = '';  // same origin
 let currentSymbol = null;
 let priceChart = null, returnChart = null, compareChart = null;
 
-// ── Fetch helpers ────────────────────────────────────────────
+// ── Fetch helpers
 async function apiFetch(path) {
   const r = await fetch(API + path);
   if (!r.ok) throw new Error(await r.text());
@@ -15,7 +15,12 @@ function showLoader(msg = 'Fetching data…') {
 }
 function hideLoader() { document.getElementById('loader').classList.remove('show'); }
 
-// ── Sidebar ──────────────────────────────────────────────────
+function showError(msg) {
+  const content = document.getElementById('content');
+  content.innerHTML = `<div class="error-banner">⚠️ <strong>Something went wrong</strong><p>${msg}</p></div>`;
+}
+
+// ── Sidebar
 async function loadCompanies() {
   try {
     const data = await apiFetch('/companies');
@@ -28,10 +33,10 @@ async function loadCompanies() {
       div.onclick = () => selectCompany(c.symbol, c.name);
       el.appendChild(div);
     });
-  } catch(e) { document.getElementById('company-list').textContent = 'Error loading companies'; }
+  } catch (e) { document.getElementById('company-list').textContent = 'Error loading companies'; }
 }
 
-// ── Select company ───────────────────────────────────────────
+// ── Select company
 async function selectCompany(symbol, name) {
   currentSymbol = symbol;
   document.querySelectorAll('.company-item').forEach(el => {
@@ -54,12 +59,12 @@ async function loadStockView() {
     ]);
 
     renderContent(stockData, summary);
-  } catch(e) {
-    alert('Error: ' + e.message);
+  } catch (e) {
+    showError(e.message);
   } finally { hideLoader(); }
 }
 
-// ── Render ───────────────────────────────────────────────────
+// ── Render
 function renderContent(stockData, summary) {
   const content = document.getElementById('content');
   content.innerHTML = `
@@ -122,9 +127,9 @@ function renderContent(stockData, summary) {
   `;
 
   // Price chart
-  const labels  = stockData.data.map(d => d.date);
-  const closes  = stockData.data.map(d => d.close);
-  const ma7     = stockData.data.map(d => d.ma7);
+  const labels = stockData.data.map(d => d.date);
+  const closes = stockData.data.map(d => d.close);
+  const ma7 = stockData.data.map(d => d.ma7);
   const returns = stockData.data.map(d => d.daily_return);
 
   priceChart?.destroy();
@@ -134,10 +139,10 @@ function renderContent(stockData, summary) {
       labels,
       datasets: [
         { label: 'Close', data: closes, borderColor: '#4f8ef7', backgroundColor: 'rgba(79,142,247,.08)', fill: true, pointRadius: 0, tension: .3 },
-        { label: '7-day MA', data: ma7, borderColor: '#f59e0b', borderDash: [4,3], pointRadius: 0, tension: .3 },
+        { label: '7-day MA', data: ma7, borderColor: '#f59e0b', borderDash: [4, 3], pointRadius: 0, tension: .3 },
       ]
     },
-    options: chartOpts('₹')
+    options: { ...chartOpts('₹'), animation: { duration: 600, easing: 'easeInOutQuart' } }
   });
 
   // Return chart
@@ -153,7 +158,7 @@ function renderContent(stockData, summary) {
         borderRadius: 2,
       }]
     },
-    options: chartOpts('%')
+    options: { ...chartOpts('%'), animation: { duration: 600, easing: 'easeInOutQuart' } }
   });
 
   // Populate compare dropdown
@@ -168,9 +173,9 @@ function renderContent(stockData, summary) {
   });
 }
 
-// ── Compare ──────────────────────────────────────────────────
+// ── Compare
 async function runCompare() {
-  const s2   = document.getElementById('cmp-select').value;
+  const s2 = document.getElementById('cmp-select').value;
   const days = document.getElementById('cmp-days').value;
   showLoader(`Comparing ${currentSymbol} vs ${s2}…`);
   try {
@@ -188,21 +193,21 @@ async function runCompare() {
         labels,
         datasets: [
           { label: currentSymbol, data: data[currentSymbol + '_normalised'], borderColor: '#4f8ef7', pointRadius: 0, tension: .3 },
-          { label: s2,            data: data[s2 + '_normalised'],            borderColor: '#f59e0b', pointRadius: 0, tension: .3 },
+          { label: s2, data: data[s2 + '_normalised'], borderColor: '#f59e0b', pointRadius: 0, tension: .3 },
         ]
       },
-      options: chartOpts('', 'Normalised to 100')
+      options: { ...chartOpts('', 'Normalised to 100'), animation: { duration: 600, easing: 'easeInOutQuart' } }
     });
-  } catch(e) { alert('Compare error: ' + e.message); }
+  } catch (e) { showError('Compare error: ' + e.message); }
   finally { hideLoader(); }
 }
 
-// ── Gainers/Losers ───────────────────────────────────────────
+// ── Gainers/Losers
 async function loadGainersLosers() {
   showLoader('Fetching market overview…');
   try {
     const data = await apiFetch('/gainers-losers');
-    if (data.message) { alert(data.message); return; }
+    if (data.message) { showError(data.message); return; }
 
     const gl = document.getElementById('gl-section') || null;
     const targetEl = gl || (() => {
@@ -238,21 +243,21 @@ async function loadGainersLosers() {
         </div>
       </div>
     `;
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch (e) { showError(e.message); }
   finally { hideLoader(); }
 }
 
-// ── Refresh ───────────────────────────────────────────────────
+// ── Refresh
 async function refreshCurrent() {
   if (!currentSymbol) return;
   showLoader(`Refreshing ${currentSymbol}…`);
   try {
     await fetch(API + `/refresh/${currentSymbol}`, { method: 'POST' });
     await loadStockView();
-  } catch(e) { alert('Refresh error: ' + e.message); hideLoader(); }
+  } catch (e) { showError('Refresh error: ' + e.message); hideLoader(); }
 }
 
-// ── Chart defaults ────────────────────────────────────────────
+// ── Chart defaults
 function chartOpts(unit = '', title = '') {
   return {
     responsive: true, maintainAspectRatio: false,
@@ -272,8 +277,8 @@ function chartOpts(unit = '', title = '') {
   };
 }
 
-// ── Period change ─────────────────────────────────────────────
+// ── Period change
 document.getElementById('period-select').onchange = loadStockView;
 
-// ── Init ──────────────────────────────────────────────────────
+// ── Init
 loadCompanies();
