@@ -1,28 +1,28 @@
-# 📊 Stock Data Intelligence Dashboard
+# Stock Data Intelligence Dashboard
 
 A full-stack, responsive financial data platform that fetches, processes, and visualizes **NSE stock market data in real time**. Built with **FastAPI, SQLite, and Vanilla JavaScript**, the platform goes beyond basic charting with **Monte Carlo-based price forecasting** and multi-stock comparative analysis.
 
-🔗 **Live (local):** `http://127.0.0.1:8000`  
-📂 **Repository:** https://github.com/arpitsharma2028/stock-data-intelligence-dashboard
+**Live (local):** `http://127.0.0.1:8000`  
+**Repository:** https://github.com/arpitsharma2028/stock-data-intelligence-dashboard
 
 ---
 
-## 🚀 Features
+## Features
 
 | Feature | Description |
 |---|---|
-| 📈 **Real-Time Data** | Live NSE market data fetched via **Yahoo Finance (yfinance)** with a graceful mock-data fallback |
-| 🧠 **Monte Carlo Forecasting** | Geometric Brownian Motion over 100 simulations → 14-day probability cone (5th / 50th / 95th percentile) |
-| 📊 **Interactive Charts** | Chart.js — animated closing price + 7-day MA line chart, coloured daily-return bar chart |
-| 🔄 **Stock Comparison** | Base-100 normalised performance chart + Pearson correlation between any two stocks |
-| 📱 **Responsive UI** | Dark-themed, mobile-first design with off-canvas sidebar and skeleton loaders |
-| 💾 **DB Caching** | SQLite caching layer (auto-created on first run) to speed up repeated requests and avoid rate-limiting |
-| 🏆 **Gainers / Losers** | Live snapshot of today's top 3 gainers and losers across all tracked companies |
-| 🐳 **Docker Ready** | Included `Dockerfile` for one-command containerised deployment |
+| **Real-Time Data** | Live NSE market data fetched via **Yahoo Finance (yfinance)** with a graceful mock-data fallback |
+| **Monte Carlo Forecasting** | Geometric Brownian Motion over 100 simulations → 14-day probability cone (5th / 50th / 95th percentile) |
+| **Interactive Charts** | Chart.js — animated closing price + 7-day MA line chart, coloured daily-return bar chart |
+| **Stock Comparison** | Base-100 normalised performance chart + Pearson correlation between any two stocks |
+| **Responsive UI** | Dark-themed, mobile-first design with off-canvas sidebar and skeleton loaders |
+| **DB Caching** | SQLite caching layer (auto-created on first run) to speed up repeated requests and avoid rate-limiting |
+| **Gainers / Losers** | Live snapshot of today's top 3 gainers and losers across all tracked companies |
+| **Docker Ready** | Included `Dockerfile` for one-command containerised deployment |
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 **Backend:** Python · FastAPI · SQLite · Pandas · NumPy · yfinance  
 **Frontend:** HTML · Vanilla CSS · Vanilla JavaScript · Chart.js  
@@ -30,7 +30,7 @@ A full-stack, responsive financial data platform that fetches, processes, and vi
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 stock-data-intelligence-dashboard/
@@ -45,15 +45,11 @@ stock-data-intelligence-dashboard/
     │   └── routers.py         # All API route handlers
     ├── static/                # Frontend (index.html, style.css, script.js)
     ├── Dockerfile             # Docker container definition
-    ├── requirements.txt       # Pinned Python dependencies
-    └── .gitignore             # stocks.db excluded — DB is auto-created on first run
+    └── requirements.txt       # Pinned Python dependencies
 ```
-
-> **Note:** `stocks.db` is intentionally excluded from version control. It is automatically created and populated the first time you start the server.
-
 ---
 
-## ⚙️ Installation & Setup
+## Installation & Setup
 
 ### 1. Clone the repository
 
@@ -86,17 +82,7 @@ Swagger API docs are auto-generated at `http://127.0.0.1:8000/docs`.
 
 ---
 
-### 🐳 Docker (Alternative)
-
-```bash
-cd stock_dashboard
-docker build -t stock-dashboard .
-docker run -p 8000:8000 stock-dashboard
-```
-
----
-
-## 📡 API Endpoints
+## API Endpoints
 
 | Endpoint | Method | Description |
 |---|---|---|
@@ -112,7 +98,7 @@ docker run -p 8000:8000 stock-dashboard
 
 ---
 
-## 📊 Supported Stocks
+## Supported Stocks
 
 | Symbol | Company | Sector |
 |---|---|---|
@@ -129,7 +115,7 @@ docker run -p 8000:8000 stock-dashboard
 
 ---
 
-## 🧮 Calculated Metrics
+## Calculated Metrics
 
 | Metric | Formula / Method |
 |---|---|
@@ -142,43 +128,13 @@ docker run -p 8000:8000 stock-dashboard
 
 ---
 
-## ⚠️ Troubleshooting
-
-**Port 8000 already in use**
-```
-[WinError 10013] An attempt was made to access a socket in a way forbidden...
-```
-Stop any other running Uvicorn process, or use a different port:
-```bash
-python -m uvicorn app.main:app --reload --port 8001
-```
-
-**`Could not import module "main"`**  
-Make sure you are running the command from inside the `stock_dashboard/` directory, and use the full module path:
-```bash
-python -m uvicorn app.main:app --reload
-```
-
-**No data / charts empty**  
-Data is fetched on first request for each symbol. If yfinance is unreachable (corporate network, VPN), the app automatically falls back to realistic mock data so the UI remains fully functional.
-
----
-
-## 🏗️ Architecture Notes
-
-- **Resilient data layer:** `ensure_data()` checks the local SQLite cache before hitting the network. If the external API fails, a statistically realistic mock dataset is generated so the dashboard never shows a blank screen.
-- **Separation of concerns:** Routing (`routers.py`) → Business logic & data (`services.py`) → Persistence (`database.py`).
-- **CORS:** Configured to `allow_origins=["*"]` for local development convenience. Restrict this for any public deployment.
-
----
-
-## 👨‍💻 Author
+## Author
 
 **Arpit Sharma**  
 📧 Contact via GitHub — [arpitsharma2028](https://github.com/arpitsharma2028)
 
 ---
 
-## ⭐ Show Your Support
+## Show Your Support
 
 If you found this project useful, give it a ⭐ on GitHub and share it with others!
