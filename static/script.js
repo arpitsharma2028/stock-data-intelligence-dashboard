@@ -20,6 +20,11 @@ function showError(msg) {
   content.innerHTML = `<div class="error-banner">⚠️ <strong>Something went wrong</strong><p>${msg}</p></div>`;
 }
 
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('show-sidebar');
+  document.getElementById('overlay').classList.toggle('show-overlay');
+}
+
 // ── Sidebar
 async function loadCompanies() {
   try {
@@ -44,6 +49,13 @@ async function selectCompany(symbol, name) {
   });
   document.getElementById('stock-title').textContent = `${symbol} — ${name}`;
   document.getElementById('refresh-btn').style.display = '';
+  
+  // Auto-hide sidebar on mobile after selection
+  if (window.innerWidth <= 768) {
+    document.getElementById('sidebar').classList.remove('show-sidebar');
+    document.getElementById('overlay').classList.remove('show-overlay');
+  }
+  
   await loadStockView();
 }
 
@@ -282,3 +294,12 @@ document.getElementById('period-select').onchange = loadStockView;
 
 // ── Init
 loadCompanies();
+
+// ── Search Filter
+document.getElementById('stock-search').addEventListener('input', function(e) {
+  const term = e.target.value.toLowerCase();
+  document.querySelectorAll('.company-item').forEach(el => {
+    const text = el.textContent.toLowerCase();
+    el.style.display = text.includes(term) ? '' : 'none';
+  });
+});
