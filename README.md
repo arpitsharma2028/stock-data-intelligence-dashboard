@@ -2,9 +2,10 @@
 
 A full-stack, responsive financial data platform that fetches, processes, and visualizes **NSE stock market data in real time**. Built with **FastAPI, SQLite, and Vanilla JavaScript**, the platform goes beyond basic charting with **Monte Carlo-based price forecasting** and multi-stock comparative analysis.
 
+**Live Demo:** https://stock-dashboard-nro3.onrender.com
 **Live (local):** `http://127.0.0.1:8000`  
 **Repository:** https://github.com/arpitsharma2028/stock-data-intelligence-dashboard
-
+**Demo Video:** https://drive.google.com/file/d/1cDFAWIWHKVbR9yOfQzoxAe0kr4pJUUap/view?usp=drivesdk
 ---
 
 ## Features
