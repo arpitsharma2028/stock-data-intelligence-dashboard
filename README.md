@@ -137,9 +137,3 @@ Swagger API docs are auto-generated at `http://127.0.0.1:8000/docs`.
 
 **Arpit Sharma**  
 📧 Contact via GitHub — [arpitsharma2028](https://github.com/arpitsharma2028)
-
----
-
-## Show Your Support
-
-If you found this project useful, give it a ⭐ on GitHub and share it with others!
